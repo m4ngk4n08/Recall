@@ -1,0 +1,15 @@
+.dashboard-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.error { background: #fee; color: #c00; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; }
+form { background: #f9f9f9; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+label { font-weight: 600; display: block; margin-bottom: 0.25rem; }
+input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+button { background: #007bff; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; width: fit-content; }
+button:disabled { background: #aaa; cursor: not-allowed; }
+.items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+.item-card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; background: white; transition: box-shadow 0.2s; }
+.item-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.badge { background: #e9ecef; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-bottom: 0.5rem; }
+.tags { margin: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.tag { background: #e7f3ff; color: #0066cc; padding: 0.2rem 0.5rem; border-radius: 16px; font-size: 0.7rem; }
+.error-text { color: #c00; font-size: 0.75rem; }
+.loading, .empty-state { text-align: center; padding: 2rem; color: #666; }

@@ -1,0 +1,78 @@
+<div class="dashboard-container">
+  <h1>Recall – Your Second Brain</h1>
+
+  @if (error()) {
+    <div class="error" role="alert" aria-live="assertive">{{ error() }}</div>
+  }
+
+  <!-- Create Form (same as before) -->
+  <section aria-label="Create new item">
+    <form [formGroup]="itemForm" (ngSubmit)="addItem()">
+      <div>
+        <label for="title">Title *</label>
+        <input id="title" type="text" formControlName="title" />
+        @if (itemForm.get('title')?.invalid && itemForm.get('title')?.touched) {
+          <small class="error-text">Title required (min 3 chars).</small>
+        }
+      </div>
+      <div>
+        <label for="content">Content *</label>
+        <textarea id="content" rows="3" formControlName="content"></textarea>
+      </div>
+      <div>
+        <label for="tags">Tags (comma-separated)</label>
+        <input id="tags" type="text" [(ngModel)]="tagInputValue" [ngModelOptions]="{standalone: true}" />
+      </div>
+      <button type="submit" [disabled]="itemForm.invalid || isLoading()">
+        {{ isLoading() ? 'Saving...' : 'Save Item' }}
+      </button>
+    </form>
+  </section>
+
+  <!-- Items List -->
+  <section aria-label="Your saved items">
+    <h2>My Items <span>({{ itemCount() }})</span></h2>
+
+    @if (isLoading() && items().length === 0) {
+      <div class="loading">Loading items...</div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">No items yet. Create your first note above.</div>
+    } @else {
+      <div class="items-grid">
+        @for (item of items(); track item.id) {
+          <div class="item-card">
+            <!-- View mode -->
+            @if (editingId() !== item.id) {
+              <h3>{{ item.title }}</h3>
+              <span class="badge">{{ item.sourceType }}</span>
+              <p>{{ item.content | slice:0:150 }}{{ item.content.length > 150 ? '…' : '' }}</p>
+              <div class="tags">
+                @for (tag of item.tags; track tag) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+              <small>Saved: {{ item.saveAt | date:'mediumDate' }}</small>
+              <div class="item-actions">
+                <button class="edit-btn" (click)="startEdit(item)">Edit</button>
+                <button class="delete-btn" (click)="deleteItem(item.id, item.title)">Delete</button>
+              </div>
+            }
+
+            <!-- Edit mode -->
+            @if (editingId() === item.id) {
+              <form [formGroup]="editForm" (ngSubmit)="updateItem(item.id)">
+                <input formControlName="title" placeholder="Title" />
+                <textarea formControlName="content" rows="3" placeholder="Content"></textarea>
+                <input type="text" [(ngModel)]="editTagInputValue" [ngModelOptions]="{standalone: true}" placeholder="Tags (comma separated)" />
+                <div class="edit-actions">
+                  <button type="submit" [disabled]="editForm.invalid || isLoading()">Save</button>
+                  <button type="button" (click)="cancelEdit()">Cancel</button>
+                </div>
+              </form>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
