@@ -38,6 +38,10 @@ namespace Recall.Api.Data
                 ));
 
                 entity.Property(e => e.SaveAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.HasIndex(e => e.Embedding)
+                    .HasMethod("ivfflat")
+                    .HasOperators("vector_cosine_ops");
             });
             
         }

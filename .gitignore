@@ -19,6 +19,7 @@
 *.orig
 *.rej
 
+
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json
@@ -54,6 +55,8 @@ desktop.ini
 .env
 .env.local
 .env.*.local
+appsettings.json
+appsettings.*.json
 
 # Docker
 .dockerignore
