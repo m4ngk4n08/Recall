@@ -17,7 +17,16 @@ namespace Recall.Api.Services
         }
         public List<string> ChunkText(string text, int chunkSize = 500, int overlap = 50)
         {
-            throw new NotImplementedException();
+            var chunks = new List<string>();
+            var words = text.Split(' ');
+
+            for (int i = 0; i < words.Length; i += chunkSize - overlap)
+            {
+                var chunk = string.Join(' ', words.Skip(i).Take(chunkSize));
+                chunks.Add(chunk);
+                if (i + chunkSize >= words.Length) break; // Avoid adding empty chunk at the end
+            }
+            return chunks;
         }
 
         public async Task<(string Title, string Content, string SourceType)> ExtractFromUrlAsync(string url)

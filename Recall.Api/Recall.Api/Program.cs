@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Recall.Api.Data;
 using Recall.Api.Middleware;
 using Recall.Api.Repositories;
@@ -16,16 +17,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))   
-    );
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("DefaultConnection"));
+dataSourceBuilder.UseVector();
+var dataSource = dataSourceBuilder.Build();
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(dataSource, o => o.UseVector()));
+
+var key = builder.Configuration["Gemini:ApiKey"];
+
+Console.WriteLine(string.IsNullOrEmpty(key) ? "missing" : "ok");
 
 // DI
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IITemService, ItemService>();
 builder.Services.AddScoped<IExtractionService, ExtractionService>();
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
+builder.Services.AddScoped<IIngestionService, IngestionService>();
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
 {

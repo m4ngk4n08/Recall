@@ -19,6 +19,7 @@ namespace Recall.Api.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.HasPostgresExtension("vector");
 
             modelBuilder.Entity<Item>(entity =>
             {
@@ -39,9 +40,14 @@ namespace Recall.Api.Data
 
                 entity.Property(e => e.SaveAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                entity.Property(e => e.Embedding)
+                .HasColumnType("vector(1536)");
+
                 entity.HasIndex(e => e.Embedding)
                     .HasMethod("ivfflat")
                     .HasOperators("vector_cosine_ops");
+
+                entity.Property(e => e.ChunkIndex);
             });
             
         }

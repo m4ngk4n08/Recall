@@ -72,7 +72,8 @@ export class Dashboard implements OnInit {
       title: formValue.title!,
       content: formValue.content!,
       sourceType: formValue.sourceType!,
-      tags: this.tagInputValue ? this.tagInputValue.split(',').map(tag => tag.trim()) : []
+      tags: this.tagInputValue ? this.tagInputValue.split(',').map(tag => tag.trim()) : [],
+      chunkIndex: 0 // default value, backend will set actual index
     };
 
     this.isLoading.set(true);
@@ -118,7 +119,9 @@ export class Dashboard implements OnInit {
       title: formValue.title!,
       content: formValue.content!,
       sourceType: formValue.sourceType!,
-      tags: updatedTags
+      tags: updatedTags,
+      chunkIndex: 0 // default value, backend will set actual index
+
     };
 
     this.isLoading.set(true);

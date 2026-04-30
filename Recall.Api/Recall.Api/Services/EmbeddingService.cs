@@ -7,7 +7,7 @@ namespace Recall.Api.Services
     public class EmbeddingService : IEmbeddingService
     {
         private readonly Client _client;
-        private const string ModelId = "text-embedding-004";
+        private const string ModelId = "gemini-embedding-2";
         public EmbeddingService(IConfiguration conf)
         {
             var apiKey = conf["Gemini:ApiKey"];

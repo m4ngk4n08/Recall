@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
-import { CreateItemDto, Item } from "../../app/models/item.model";
+import { CreateItemDto, Item, SearchResult } from "../../app/models/item.model";
 
 
 @Injectable({ providedIn: "root" })
@@ -23,5 +23,13 @@ export class ItemService{
 
     delete(id: string): Observable<void>{
         return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
+
+    ingestUrl(url: string): Observable<{ jobId: string; message: string}>{
+        return this.http.post<{ jobId: string; message: string }>(`${this.apiUrl}/ingest-url`, { url });
+    }
+
+    search(query: string, limit: number = 10): Observable<SearchResult[]>{
+        return this.http.get<SearchResult[]>(`${this.apiUrl}/search`, { params: {q: query, limit } });
     }
 }

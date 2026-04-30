@@ -78,7 +78,7 @@ namespace Recall.Api.Controllers
             return deleted ? Ok() : NotFound();
         }
 
-        [HttpPost("intest")]
+        [HttpPost("ingest")]
         [ProducesResponseType(typeof(ItemResponseDto), 200)]
         public async Task<IActionResult> IngestUrl([FromBody] IngestUrlDto dto)
         {

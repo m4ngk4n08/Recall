@@ -1,0 +1,29 @@
+<div class="ingestor-container">
+    <h2>Ingest from Url</h2>
+    <form [formGroup]="ingestForm" (ngSubmit)="onSubmit()">
+        <div>
+            <label for="url">Web page, Youtube vids or PDF link</label>
+            <input
+                id="url"
+                type="url"
+                formControlName="url"
+                placeholder="Enter a URL to ingest"
+                aria-describedby="urlHelp"
+                />
+                <small id="url-help">Supports articles, Youtube(with captions) and PDF files</small>
+                @if(ingestForm.get('url')?.invalid && ingestForm.get('url')?.touched) {
+                    <div class="error">Please enter a valid URL</div>
+                }
+        </div>
+        <button type="submit" [disabled]="ingestForm.invalid || isLoading()">
+            {{ isLoading() ? 'Ingesting..' : 'Ingest' }}
+        </button>
+    </form>
+
+    @if (successMessage()) {
+        <div class="success" role="status" aria-live="polite">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+        <div class="error" role="alert">{{ errorMessage() }}</div>
+    }
+</div>
