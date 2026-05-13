@@ -29,7 +29,7 @@ namespace Recall.Api.Services
                 Content = content,
                 SourceType = sourceType,
                 SourceUrl = url,
-                SaveAt = DateTime.UtcNow,
+                SavedAt = DateTime.UtcNow,
                 Tags = new List<string>()
             };
             await _itemRepository.CreateAsync(parent);
@@ -51,7 +51,7 @@ namespace Recall.Api.Services
                     Content = chunks[i],
                     SourceType = sourceType,
                     SourceUrl = url,
-                    SaveAt = DateTime.UtcNow,
+                    SavedAt = DateTime.UtcNow,
                     Tags = new List<string>(),
                     ParentId = parent.Id,
                     ChunkIndex = i,

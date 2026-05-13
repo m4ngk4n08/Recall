@@ -36,7 +36,7 @@ namespace Recall.Api.Services
         public async Task<ItemResponseDto?> GetByIdAsync(Guid id)
         {
             var item = await _itemRepository.GetByIdAsync(id);
-            return item is not null ? null : _mapper.Map<ItemResponseDto>(item);
+            return item is null ? null : _mapper.Map<ItemResponseDto>(item);
         }
 
         public async Task<ItemResponseDto?> UpdateAsync(Guid id, ItemCreateDto dto)

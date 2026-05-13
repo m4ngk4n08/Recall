@@ -10,7 +10,7 @@ namespace Recall.Api.Models
         public string Content { get; set; } = string.Empty;
         public string SourceType { get; set; } = "note";
         public string? SourceUrl { get; set; }
-        public DateTime SaveAt { get; set; }
+        public DateTime SavedAt { get; set; }
         public List<string> Tags { get; set; }
 
         // Chunking & vector search

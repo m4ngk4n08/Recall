@@ -4,7 +4,7 @@ using Recall.Api.Services.Interfaces;
 
 namespace Recall.Api.Services
 {
-    public class EmbeddingService : IEmbeddingService
+    public class EmbeddingService 
     {
         private readonly Client _client;
         private const string ModelId = "gemini-embedding-2";

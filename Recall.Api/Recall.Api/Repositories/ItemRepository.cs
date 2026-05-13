@@ -13,7 +13,7 @@ namespace Recall.Api.Repositories
         public async Task<Item> CreateAsync(Item item)
         {
             item.Id = Guid.NewGuid();
-            item.SaveAt = DateTime.UtcNow;
+            item.SavedAt = DateTime.UtcNow;
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
             return item;

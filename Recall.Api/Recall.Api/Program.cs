@@ -30,8 +30,9 @@ Console.WriteLine(string.IsNullOrEmpty(key) ? "missing" : "ok");
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IITemService, ItemService>();
 builder.Services.AddScoped<IExtractionService, ExtractionService>();
-builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
+//builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IIngestionService, IngestionService>();
+builder.Services.AddScoped<IEmbeddingService, LocalEmbeddingService>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpClient();
 
@@ -68,7 +69,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
     app.Run();

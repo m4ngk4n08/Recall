@@ -2,6 +2,8 @@
 {
     public class SearchResultDto : ItemResponseDto
     {
-        public double Distance { get; set; } // cosine distance (0 = identical, 2 = opposite)
+        public Guid? ParentId { get; set; }
+        public int ChunkIndex { get; set; }
+        public double Distance { get; set; }   // Cosine distance from query
     }
 }

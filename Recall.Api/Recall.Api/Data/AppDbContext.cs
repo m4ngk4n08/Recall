@@ -38,10 +38,10 @@ namespace Recall.Api.Data
                     c => c.ToList()
                 ));
 
-                entity.Property(e => e.SaveAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(e => e.SavedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.Property(e => e.Embedding)
-                .HasColumnType("vector(1536)");
+                .HasColumnType("vector(384)");
 
                 entity.HasIndex(e => e.Embedding)
                     .HasMethod("ivfflat")

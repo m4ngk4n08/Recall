@@ -38,12 +38,12 @@ namespace Recall.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<Vector>("Embedding")
-                        .HasColumnType("vector(1536)");
+                        .HasColumnType("vector(384)");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("SaveAt")
+                    b.Property<DateTime>("SavedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");

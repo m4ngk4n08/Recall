@@ -15,17 +15,29 @@ namespace Recall.Api.Services
             _httpClient = httpClient;
             _youtubeClient = new YoutubeClient();
         }
-        public List<string> ChunkText(string text, int chunkSize = 500, int overlap = 50)
+        public List<string> ChunkText(string text, int maxTokens = 200)
         {
+            if (string.IsNullOrWhiteSpace(text)) return new List<string>();
+            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var chunks = new List<string>();
-            var words = text.Split(' ');
+            var currentChunkWords = new List<string>();
 
-            for (int i = 0; i < words.Length; i += chunkSize - overlap)
+            // Aprox: 200tokens ~ 150 words
+            int maxWords = (int)(maxTokens * 0.75);
+
+            foreach (var word in words)
             {
-                var chunk = string.Join(' ', words.Skip(i).Take(chunkSize));
-                chunks.Add(chunk);
-                if (i + chunkSize >= words.Length) break; // Avoid adding empty chunk at the end
+                currentChunkWords.Add(word);
+                if(currentChunkWords.Count >= maxWords)
+                {
+                    chunks.Add(string.Join(' ', currentChunkWords));
+                    currentChunkWords.Clear();
+                }
             }
+
+            if (currentChunkWords.Any())
+                chunks.Add(string.Join(' ', currentChunkWords));
+
             return chunks;
         }
 
