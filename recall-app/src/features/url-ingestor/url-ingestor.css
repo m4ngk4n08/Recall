@@ -1,49 +1,95 @@
-.ingestor-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  background: #f9f9f9;
-  border-radius: 12px;
+.ingest-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: var(--spacing-xl);
+  min-height: calc(100vh - 64px);
 }
 
-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-input {
+.ingest-card {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  max-width: 500px;
+  padding: var(--spacing-xl);
 }
 
-button {
-  margin-top: 1rem;
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
+.ingest-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
 }
 
-button:disabled {
-  background: #aaa;
-  cursor: not-allowed;
+.ingest-header h1 {
+  font-size: 24px;
+  margin-bottom: var(--spacing-sm);
 }
 
-.success {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: #d4edda;
-  color: #155724;
-  border-radius: 4px;
+.ingest-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.error, .error-text {
-  margin-top: 0.5rem;
-  color: #dc3545;
-  font-size: 0.875rem;
+.ingest-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-label);
+}
+
+.ingest-btn {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-size: 15px;
+}
+
+.message {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+}
+
+.message.success {
+  background-color: #F0FDF4;
+  color: #166534;
+  border: 1px solid #BBF7D0;
+}
+
+.message.error {
+  background-color: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: var(--text-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-text {
+  color: var(--error);
+  font-size: 12px;
 }

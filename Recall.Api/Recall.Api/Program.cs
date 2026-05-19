@@ -32,9 +32,12 @@ builder.Services.AddScoped<IITemService, ItemService>();
 builder.Services.AddScoped<IExtractionService, ExtractionService>();
 //builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IIngestionService, IngestionService>();
-builder.Services.AddScoped<IEmbeddingService, LocalEmbeddingService>();
+builder.Services.AddSingleton<IEmbeddingService, LocalEmbeddingService>();
+builder.Services.AddHttpClient<IOllamaService, OllamaService>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
 builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
 {

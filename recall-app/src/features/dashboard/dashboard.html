@@ -1,78 +1,189 @@
-<div class="dashboard-container">
-  <h1>Recall – Your Second Brain</h1>
+<div class="container">
+  <!-- Search Section -->
+  <section class="search-section">
+    <div class="search-bar-wrapper">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search your second brain..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+      @if (isSearching()) {
+        <div class="search-spinner"></div>
+      }
+    </div>
 
-  @if (error()) {
-    <div class="error" role="alert" aria-live="assertive">{{ error() }}</div>
-  }
-
-  <!-- Create Form (same as before) -->
-  <section aria-label="Create new item">
-    <form [formGroup]="itemForm" (ngSubmit)="addItem()">
-      <div>
-        <label for="title">Title *</label>
-        <input id="title" type="text" formControlName="title" />
-        @if (itemForm.get('title')?.invalid && itemForm.get('title')?.touched) {
-          <small class="error-text">Title required (min 3 chars).</small>
-        }
-      </div>
-      <div>
-        <label for="content">Content *</label>
-        <textarea id="content" rows="3" formControlName="content"></textarea>
-      </div>
-      <div>
-        <label for="tags">Tags (comma-separated)</label>
-        <input id="tags" type="text" [(ngModel)]="tagInputValue" [ngModelOptions]="{standalone: true}" />
-      </div>
-      <button type="submit" [disabled]="itemForm.invalid || isLoading()">
-        {{ isLoading() ? 'Saving...' : 'Save Item' }}
-      </button>
-    </form>
-  </section>
-
-  <!-- Items List -->
-  <section aria-label="Your saved items">
-    <h2>My Items <span>({{ itemCount() }})</span></h2>
-
-    @if (isLoading() && items().length === 0) {
-      <div class="loading">Loading items...</div>
-    } @else if (items().length === 0) {
-      <div class="empty-state">No items yet. Create your first note above.</div>
-    } @else {
-      <div class="items-grid">
-        @for (item of items(); track item.id) {
-          <div class="item-card">
-            <!-- View mode -->
-            @if (editingId() !== item.id) {
-              <h3>{{ item.title }}</h3>
-              <span class="badge">{{ item.sourceType }}</span>
-              <p>{{ item.content | slice:0:150 }}{{ item.content.length > 150 ? '…' : '' }}</p>
-              <div class="tags">
-                @for (tag of item.tags; track tag) {
-                  <span class="tag">{{ tag }}</span>
-                }
+    @if (searchResults().length > 0) {
+      <div class="search-results-panel card">
+        <h3>Search Results</h3>
+        <div class="search-results-list">
+          @for (result of searchResults(); track result.id) {
+            <div class="search-result-item" (click)="selectSearchResult(result)">
+              <div class="result-header">
+                <span class="result-title">{{ result.title }}</span>
+                <span class="result-relevance">{{ ((result.relevance || 0) * 100).toFixed(0) }}% relevant</span>
               </div>
-              <small>Saved: {{ item.saveAt | date:'mediumDate' }}</small>
-              <div class="item-actions">
-                <button class="edit-btn" (click)="startEdit(item)">Edit</button>
-                <button class="delete-btn" (click)="deleteItem(item.id, item.title)">Delete</button>
-              </div>
-            }
-
-            <!-- Edit mode -->
-            @if (editingId() === item.id) {
-              <form [formGroup]="editForm" (ngSubmit)="updateItem(item.id)">
-                <input formControlName="title" placeholder="Title" />
-                <textarea formControlName="content" rows="3" placeholder="Content"></textarea>
-                <input type="text" [(ngModel)]="editTagInputValue" [ngModelOptions]="{standalone: true}" placeholder="Tags (comma separated)" />
-                <div class="edit-actions">
-                  <button type="submit" [disabled]="editForm.invalid || isLoading()">Save</button>
-                  <button type="button" (click)="cancelEdit()">Cancel</button>
-                </div>
-              </form>
-            }
-          </div>
-        }
+              <p class="result-snippet">{{ result.content | slice:0:100 }}...</p>
+            </div>
+          }
+        </div>
       </div>
     }
   </section>
+
+  @if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+  }
+
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="topics-sidebar">
+      <h3>Topics</h3>
+      <nav class="topics-nav">
+        <button 
+          class="topic-link" 
+          [class.active]="selectedTopic() === null"
+          (click)="selectTopic(null)">
+          All Items
+        </button>
+        @for (topic of topics(); track topic.name) {
+          <button 
+            class="topic-link" 
+            [class.active]="selectedTopic() === topic.name"
+            (click)="selectTopic(topic.name)">
+            <span class="topic-name">{{ topic.name }}</span>
+            <span class="topic-count">{{ topic.count }}</span>
+          </button>
+        }
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <h2>
+          @if (selectedTopic()) {
+            Items tagged with "{{ selectedTopic() }}"
+          } @else {
+            All Items
+          }
+          <span class="count-badge">{{ itemCount() }}</span>
+        </h2>
+      </header>
+
+      <!-- Items Grid -->
+      <section class="items-grid-section">
+        @if (isLoading() && items().length === 0) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading items...</p>
+          </div>
+        } @else if (items().length === 0) {
+          <div class="empty-state">
+            <p>No items found for this topic.</p>
+          </div>
+        } @else {
+          <div class="items-grid">
+            @for (item of items(); track item.id) {
+              <div [id]="'item-' + item.id" class="item-card card" (click)="selectedItem.set(item)">
+                @if (editingId() !== item.id) {
+                  <div class="card-content">
+                    <div class="card-header">
+                      <h3>{{ item.title }}</h3>
+                      <span class="badge">{{ item.sourceType }}</span>
+                    </div>
+                    <p class="excerpt">{{ item.content | slice:0:150 }}{{ item.content.length > 150 ? '…' : '' }}</p>
+                    <div class="tags">
+                      @for (tag of item.tags; track tag) {
+                        <span class="tag-pill" (click)="$event.stopPropagation(); selectTopic(tag)">{{ tag }}</span>
+                      }
+                    </div>
+                    <div class="card-footer">
+                      <span class="date">{{ item.saveAt | date:'mediumDate' }}</span>
+                      <div class="actions">
+                        <button class="icon-btn edit" (click)="$event.stopPropagation(); startEdit(item)" title="Edit">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="icon-btn delete" (click)="$event.stopPropagation(); deleteItem(item.id, item.title)" title="Delete">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <form [formGroup]="editForm" (ngSubmit)="updateItem(item.id)" class="edit-form" (click)="$event.stopPropagation()">
+                    <input formControlName="title" class="input-field" placeholder="Title" />
+                    <textarea formControlName="content" class="input-field" rows="4" placeholder="Content"></textarea>
+                    <input type="text" [(ngModel)]="editTagInputValue" [ngModelOptions]="{standalone: true}" class="input-field" placeholder="Tags (comma separated)" />
+                    <div class="edit-actions">
+                      <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isLoading()">Save</button>
+                      <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
+                    </div>
+                  </form>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Add Item Section (Refined) -->
+      <section class="add-item-section">
+        <div class="card add-card">
+          <h3>Add New Note</h3>
+          <form [formGroup]="itemForm" (ngSubmit)="addItem()" class="add-form">
+            <div class="form-group">
+              <input id="title" type="text" formControlName="title" class="input-field" placeholder="Title *" />
+              @if (itemForm.get('title')?.invalid && itemForm.get('title')?.touched) {
+                <small class="error-text">Title required (min 3 chars).</small>
+              }
+            </div>
+            <div class="form-group">
+              <textarea id="content" rows="3" formControlName="content" class="input-field" placeholder="Content *"></textarea>
+            </div>
+            <div class="form-group">
+              <input id="tags" type="text" [(ngModel)]="tagInputValue" [ngModelOptions]="{standalone: true}" class="input-field" placeholder="Tags (comma-separated)" />
+            </div>
+            <button type="submit" class="btn-primary" [disabled]="itemForm.invalid || isLoading()">
+              {{ isLoading() ? 'Saving...' : 'Save Item' }}
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Item Detail Modal -->
+  @if (selectedItem()) {
+    <div class="modal-backdrop" (click)="closeDetail()">
+      <div class="modal-content card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h2>{{ selectedItem()?.title }}</h2>
+          <button class="close-btn" (click)="closeDetail()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </header>
+        <div class="modal-body">
+          <div class="modal-meta">
+            <span class="badge">{{ selectedItem()?.sourceType }}</span>
+            <span class="date">{{ selectedItem()?.saveAt | date:'longDate' }}</span>
+          </div>
+          <div class="modal-text">
+            {{ selectedItem()?.content }}
+          </div>
+          <div class="tags">
+            @for (tag of selectedItem()?.tags; track tag) {
+              <span class="tag-pill">{{ tag }}</span>
+            }
+          </div>
+          @if (selectedItem()?.sourceUrl) {
+            <div class="modal-source">
+              <a [href]="selectedItem()?.sourceUrl" target="_blank" class="btn-ghost">View Original Source</a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
 </div>

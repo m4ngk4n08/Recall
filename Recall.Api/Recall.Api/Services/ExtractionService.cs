@@ -18,25 +18,47 @@ namespace Recall.Api.Services
         public List<string> ChunkText(string text, int maxTokens = 200)
         {
             if (string.IsNullOrWhiteSpace(text)) return new List<string>();
-            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            // Approx: 200 tokens ~ 150 words
+            int maxWords = (int)(maxTokens * 0.75);
+            int overlapWords = (int)(maxWords * 0.15); // 15% overlap for context preservation
+
+            // Split by sentence boundaries to avoid cutting mid-thought
+            var sentences = Regex.Split(text, @"(?<=[.!?])\s+");
             var chunks = new List<string>();
             var currentChunkWords = new List<string>();
+            int currentCount = 0;
 
-            // Aprox: 200tokens ~ 150 words
-            int maxWords = (int)(maxTokens * 0.75);
-
-            foreach (var word in words)
+            foreach (var sentence in sentences)
             {
-                currentChunkWords.Add(word);
-                if(currentChunkWords.Count >= maxWords)
+                var words = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                
+                // If adding this sentence exceeds maxWords, save current chunk
+                if (currentCount + words.Length > maxWords && currentChunkWords.Any())
                 {
-                    chunks.Add(string.Join(' ', currentChunkWords));
-                    currentChunkWords.Clear();
+                    chunks.Add(string.Join(" ", currentChunkWords));
+                    
+                    // Sliding window: keep last N words for next chunk context
+                    var overlap = currentChunkWords.TakeLast(overlapWords).ToList();
+                    currentChunkWords = new List<string>(overlap);
+                    currentCount = currentChunkWords.Count;
+                }
+
+                currentChunkWords.AddRange(words);
+                currentCount += words.Length;
+
+                // Handle edge case where a single sentence is longer than maxWords
+                if (currentCount >= maxWords)
+                {
+                    chunks.Add(string.Join(" ", currentChunkWords));
+                    var overlap = currentChunkWords.TakeLast(overlapWords).ToList();
+                    currentChunkWords = new List<string>(overlap);
+                    currentCount = currentChunkWords.Count;
                 }
             }
 
-            if (currentChunkWords.Any())
-                chunks.Add(string.Join(' ', currentChunkWords));
+            if (currentChunkWords.Count > overlapWords)
+                chunks.Add(string.Join(" ", currentChunkWords));
 
             return chunks;
         }
@@ -55,17 +77,54 @@ namespace Recall.Api.Services
         {
             var web = new HtmlWeb();
             var doc = await web.LoadFromWebAsync(url);
-            var title = doc.DocumentNode.SelectSingleNode("//head/title")?.InnerText.Trim() ?? "Untitled";
-            var body = doc.DocumentNode.SelectSingleNode("//body");
-            if (body == null) throw new Exception("No body found");
+            
+            // 1. Title extraction (OG tags -> H1 -> Title)
+            var title = doc.DocumentNode.SelectSingleNode("//meta[@property='og:title']")?.GetAttributeValue("content", null)
+                        ?? doc.DocumentNode.SelectSingleNode("//h1")?.InnerText.Trim()
+                        ?? doc.DocumentNode.SelectSingleNode("//head/title")?.InnerText.Trim() 
+                        ?? "Untitled";
 
-            // Remove scripts, styles, etc.
-            var nodesToRemove = body.SelectNodes(".//script|.//style|.//nav|.//footer|.//aside.//noscript");
-            if (nodesToRemove != null)
-                foreach (var node in nodesToRemove) node.Remove();
+            // 2. Identify the main content container
+            var mainContent = doc.DocumentNode.SelectSingleNode("//article") 
+                              ?? doc.DocumentNode.SelectSingleNode("//main")
+                              ?? doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'content') or contains(@class, 'post') or contains(@id, 'content')]")
+                              ?? doc.DocumentNode.SelectSingleNode("//body");
 
-            var text = body.InnerText;
+            if (mainContent == null) return (title, "", "Web");
+
+            // 3. Boilerplate removal
+            var boilerplateSelectors = new[] { 
+                ".//script", ".//style", ".//nav", ".//footer", ".//aside", ".//header", 
+                ".//iframe", ".//form", ".//button", ".//svg", ".//noscript",
+                ".//*[contains(@class, 'sidebar') or contains(@class, 'nav') or contains(@class, 'footer') or contains(@class, 'ads')]"
+            };
+
+            foreach (var selector in boilerplateSelectors)
+            {
+                var nodes = mainContent.SelectNodes(selector);
+                if (nodes != null) foreach (var node in nodes) node.Remove();
+            }
+
+            // 4. Metadata description
+            var description = doc.DocumentNode.SelectSingleNode("//meta[@name='description']")?.GetAttributeValue("content", null)
+                              ?? doc.DocumentNode.SelectSingleNode("//meta[@property='og:description']")?.GetAttributeValue("content", null);
+
+            var text = mainContent.InnerText;
+            
+            // Cleanup whitespace and special chars
+            text = Regex.Replace(text, @"[^a-zA-Z0-9\s.,!?;:'""()\[\]{}\-_]", "");
             text = Regex.Replace(text, @"\s+", " ").Trim();
+
+            // Prepend description if it's not already at the start of the text
+            if (!string.IsNullOrEmpty(description))
+            {
+                description = description.Trim();
+                if (!text.StartsWith(description.Substring(0, Math.Min(20, description.Length))))
+                {
+                    text = description + ". " + text;
+                }
+            }
+
             return (title, text, "Web");
         }
 

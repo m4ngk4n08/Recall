@@ -48,5 +48,17 @@ namespace Recall.Api.Services
             var updated = await _itemRepository.UpdateAsync(id, existing);
             return updated is null ? null : _mapper.Map<ItemResponseDto>(updated);
         }
+
+        public async Task<IEnumerable<TopicResponseDto>> GetTopicsAsync()
+        {
+            var topics = await _itemRepository.GetTopicsAsync();
+            return topics.Select(t => new TopicResponseDto { Name = t.Name, Count = t.Count });
+        }
+
+        public async Task<IEnumerable<ItemResponseDto>> GetByTagAsync(string tag)
+        {
+            var items = await _itemRepository.GetByTagAsync(tag);
+            return _mapper.Map<IEnumerable<ItemResponseDto>>(items);
+        }
     }
 }

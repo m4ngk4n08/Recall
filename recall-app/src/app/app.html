@@ -1,1 +1,15 @@
-<router-outlet></router-outlet>
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="logo">Recall</div>
+    <div class="nav-links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Dashboard</a>
+      <a routerLink="/ingest" routerLinkActive="active">Ingest URL</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<app-chat-widget></app-chat-widget>

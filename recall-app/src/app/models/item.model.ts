@@ -1,3 +1,8 @@
+export interface Topic {
+    name: string;
+    count: number;
+}
+
 export interface Item {
     id: string;
     title: string;
@@ -12,8 +17,19 @@ export interface Item {
 
 export interface SearchResult extends Item {
     distance: number;
+    relevance?: number;
 }
 
 export type CreateItemDto = Omit<Item, 'id' | 'saveAt'>;
 
 export type UpdateItemDto = Partial<CreateItemDto>;
+
+export interface ChatRequest {
+    query: string;
+    model?: string;
+}
+
+export interface ChatResponse {
+    answer: string;
+    sources: SearchResult[];
+}

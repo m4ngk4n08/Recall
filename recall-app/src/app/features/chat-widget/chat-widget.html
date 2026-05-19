@@ -1,0 +1,51 @@
+<div class="chat-container" [class.open]="isOpen()">
+  <!-- Toggle Button -->
+  <button class="chat-toggle" (click)="toggleChat()">
+    <span *ngIf="!isOpen()">💬</span>
+    <span *ngIf="isOpen()">✖</span>
+  </button>
+
+  <!-- Chat Window -->
+  <div class="chat-window" *ngIf="isOpen()">
+    <div class="chat-header">
+      <h3>Recall AI Chat</h3>
+      <p>Powered by local LLM</p>
+    </div>
+
+    <div class="chat-messages" #scrollMe>
+      <div *ngFor="let msg of messages()" class="message-row" [class.user]="msg.sender === 'user'">
+        <div class="message-bubble">
+          <div class="message-text">{{ msg.text }}</div>
+          
+          <div *ngIf="msg.sources && msg.sources.length > 0" class="sources">
+            <p class="source-header">Sources:</p>
+            <ul>
+              <li *ngFor="let s of msg.sources">
+                <a [href]="s.sourceUrl" target="_blank">{{ s.title }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="isLoading()" class="message-row">
+        <div class="message-bubble bot thinking">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input 
+        type="text" 
+        [(ngModel)]="userInput" 
+        (keyup.enter)="sendMessage()" 
+        placeholder="Ask about your documents..."
+        [disabled]="isLoading()"
+      />
+      <button (click)="sendMessage()" [disabled]="isLoading() || !userInput().trim()">
+        ➔
+      </button>
+    </div>
+  </div>
+</div>

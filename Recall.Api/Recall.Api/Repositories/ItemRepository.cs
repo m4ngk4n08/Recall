@@ -49,5 +49,22 @@ namespace Recall.Api.Repositories
             await _context.SaveChangesAsync();
             return existing;
         }
+
+        public async Task<IEnumerable<(string Name, int Count)>> GetTopicsAsync()
+        {
+            var items = await _context.Items.ToListAsync();
+            return items
+                .SelectMany(i => i.Tags)
+                .GroupBy(t => t)
+                .Select(g => (Name: g.Key, Count: g.Count()))
+                .OrderByDescending(t => t.Count);
+        }
+
+        public async Task<IEnumerable<Item>> GetByTagAsync(string tag)
+        {
+            return await _context.Items
+                .Where(i => i.Tags.Contains(tag))
+                .ToListAsync();
+        }
     }
 }

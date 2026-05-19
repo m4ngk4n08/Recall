@@ -9,12 +9,12 @@ namespace Recall.Api.Services
         private readonly LocalEmbeddingGenerator _generator;
         private bool _disposed;
 
-        public LocalEmbeddingService(IConfiguration configuration)
+        public LocalEmbeddingService(IConfiguration configuration, IWebHostEnvironment env)
         {
-            var modelPath = configuration["LocalModel:ModelPath"] ?? "Models/all-MiniLM-L6-v2.F32.gguf";
+            var modelPath = Path.Combine(env.ContentRootPath, "Models", "AllMiniLML6V2");
             var options = new LocalEmbeddingsOptions
             {
-                ModelPath = modelPath
+                ModelPath = modelPath,
             };
             _generator = new LocalEmbeddingGenerator(options);
         }

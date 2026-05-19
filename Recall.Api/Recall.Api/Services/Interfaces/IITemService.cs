@@ -9,5 +9,7 @@ namespace Recall.Api.Services.Interfaces
         Task<ItemResponseDto> CreateAsync(ItemCreateDto dto);
         Task<ItemResponseDto?> UpdateAsync(Guid id, ItemCreateDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<IEnumerable<TopicResponseDto>> GetTopicsAsync();
+        Task<IEnumerable<ItemResponseDto>> GetByTagAsync(string tag);
     }
 }

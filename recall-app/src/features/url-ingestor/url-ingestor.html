@@ -1,29 +1,60 @@
-<div class="ingestor-container">
-    <h2>Ingest from Url</h2>
-    <form [formGroup]="ingestForm" (ngSubmit)="onSubmit()">
-        <div>
-            <label for="url">Web page, Youtube vids or PDF link</label>
-            <input
-                id="url"
-                type="url"
-                formControlName="url"
-                placeholder="Enter a URL to ingest"
-                aria-describedby="urlHelp"
-                />
-                <small id="url-help">Supports articles, Youtube(with captions) and PDF files</small>
-                @if(ingestForm.get('url')?.invalid && ingestForm.get('url')?.touched) {
-                    <div class="error">Please enter a valid URL</div>
-                }
-        </div>
-        <button type="submit" [disabled]="ingestForm.invalid || isLoading()">
-            {{ isLoading() ? 'Ingesting..' : 'Ingest' }}
-        </button>
+<div class="ingest-container container">
+  <div class="ingest-card card">
+    <header class="ingest-header">
+      <h1>Ingest Article</h1>
+      <p>Enter a URL to save and analyze the content with AI.</p>
+    </header>
+
+    <form [formGroup]="ingestForm" (ngSubmit)="onSubmit()" class="ingest-form">
+      <div class="form-group">
+        <label for="url">Article URL</label>
+        <input
+          id="url"
+          type="url"
+          formControlName="url"
+          class="input-field"
+          placeholder="https://example.com/article"
+          [attr.aria-invalid]="ingestForm.get('url')?.invalid && ingestForm.get('url')?.touched"
+        />
+        @if (ingestForm.get('url')?.invalid && ingestForm.get('url')?.touched) {
+          <small class="error-text">Please enter a valid HTTP/HTTPS URL.</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="tags">Topics (comma-separated)</label>
+        <input
+          id="tags"
+          type="text"
+          formControlName="tags"
+          class="input-field"
+          placeholder="AI, Research, Productivity"
+        />
+        <small class="hint-text">Add topics to categorize this article.</small>
+      </div>
+
+      <button type="submit" class="btn-primary ingest-btn" [disabled]="ingestForm.invalid || isLoading()">
+        @if (isLoading()) {
+          <span class="spinner-sm"></span>
+          <span>Processing...</span>
+        } @else {
+          <span>Ingest Article</span>
+        }
+      </button>
     </form>
 
     @if (successMessage()) {
-        <div class="success" role="status" aria-live="polite">{{ successMessage() }}</div>
+      <div class="message success" role="status">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>{{ successMessage() }}</span>
+      </div>
     }
+
     @if (errorMessage()) {
-        <div class="error" role="alert">{{ errorMessage() }}</div>
+      <div class="message error" role="alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
     }
+  </div>
 </div>

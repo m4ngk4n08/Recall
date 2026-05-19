@@ -44,7 +44,7 @@ namespace Recall.Api.Data
                 .HasColumnType("vector(384)");
 
                 entity.HasIndex(e => e.Embedding)
-                    .HasMethod("ivfflat")
+                    .HasMethod("hnsw")
                     .HasOperators("vector_cosine_ops");
 
                 entity.Property(e => e.ChunkIndex);

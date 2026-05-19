@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, effect } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ItemService } from '../../core/services/item.service';
-import { Item } from '../../app/models/item.model';
+import { Item, SearchResult, Topic } from '../../app/models/item.model';
 import { DatePipe, SlicePipe } from '@angular/common';
 
 @Component({
@@ -18,13 +18,85 @@ export class Dashboard implements OnInit {
   // Signals for state
   private readonly itemsSignal = signal<Item[]>([]);
   readonly items = this.itemsSignal.asReadonly();
+  
+  private readonly topicsSignal = signal<Topic[]>([]);
+  readonly topics = this.topicsSignal.asReadonly();
+  readonly selectedTopic = signal<string | null>(null);
+
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
   readonly editingId = signal<string | null>(null); // Track which item is being edited
 
+  // Search signals
+  readonly searchQuery = signal('');
+  readonly searchResults = signal<SearchResult[]>([]);
+  readonly isSearching = signal(false);
+  readonly selectedItem = signal<Item | SearchResult | null>(null);
 
   // Derive state: count of items
   readonly itemCount = computed(() => this.items().length);
+
+  constructor() {
+    // Basic search debouncing effect
+    effect(() => {
+      const query = this.searchQuery();
+      if (query.length >= 3) {
+        this.performSearch(query);
+      } else {
+        this.searchResults.set([]);
+      }
+    });
+
+    // Effect to reload items when selectedTopic changes
+    effect(() => {
+      const topic = this.selectedTopic();
+      this.loadItems(topic);
+    }, { allowSignalWrites: true });
+  }
+
+  ngOnInit() {
+    this.loadTopics();
+  }
+
+  loadTopics(): void {
+    this.itemService.getTopics().subscribe({
+      next: (topics) => this.topicsSignal.set(topics),
+      error: (err) => console.error('Failed to load topics', err)
+    });
+  }
+
+  selectTopic(topicName: string | null): void {
+    this.selectedTopic.set(topicName);
+  }
+
+  performSearch(query: string): void {
+    this.isSearching.set(true);
+    this.itemService.search(query).subscribe({
+      next: (results) => {
+        // Map distance to relevance (assuming distance is 0-1 and lower is better)
+        const mappedResults: SearchResult[] = results.map(r => ({
+          ...r,
+          relevance: Math.max(0, 1 - r.distance)
+        }));
+        this.searchResults.set(mappedResults);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.error.set('Search failed: ' + err.message);
+        this.isSearching.set(false);
+      }
+    });
+  }
+
+  selectSearchResult(result: SearchResult): void {
+    this.selectedItem.set(result);
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+  }
+
+  closeDetail(): void {
+    this.selectedItem.set(null);
+  }
 
   // Reactive form for new items
   readonly itemForm = this.fb.group({
@@ -45,14 +117,13 @@ export class Dashboard implements OnInit {
   tagInputValue = '';
   editTagInputValue = '';
 
-  ngOnInit() {
-    this.loadItems();
-  }
-
-  loadItems(): void {
+  loadItems(tag: string | null = null): void {
     this.isLoading.set(true);
     this.error.set(null);
-    this.itemService.getAll().subscribe({
+    
+    const request = tag ? this.itemService.getByTag(tag) : this.itemService.getAll();
+    
+    request.subscribe({
       next: (items) => {
         this.itemsSignal.set(items);
         this.isLoading.set(false);
@@ -84,6 +155,7 @@ export class Dashboard implements OnInit {
         this.itemForm.reset({ sourceType: 'note', tags: [] });
         this.tagInputValue = '';
         this.isLoading.set(false);
+        this.loadTopics();
       },
       error: (err) => {
         this.error.set('Failed to create item: ' + err.message);
@@ -133,6 +205,7 @@ export class Dashboard implements OnInit {
         );
         this.cancelEdit();
         this.isLoading.set(false);
+        this.loadTopics();
       },
       error: (err) => {
         this.error.set('Failed to update item: ' + err.message);
@@ -148,6 +221,7 @@ export class Dashboard implements OnInit {
         next: () => {
           this.itemsSignal.update(items => items.filter(item => item.id !== id));
           this.isLoading.set(false);
+          this.loadTopics();
         },
         error: (err) => {
           this.error.set('Failed to delete item: ' + err.message);

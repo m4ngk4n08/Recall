@@ -20,19 +20,22 @@ export class UrlIngestor {
 
     readonly ingestForm = this.fb.group({
       url: ['', [Validators.required, Validators.pattern('https?://.+')]],
+      tags: [''],
     });
 
     onSubmit() {
       if(this.ingestForm.invalid) return;
 
-      const url = this.ingestForm.value.url!;
+      const { url, tags } = this.ingestForm.value;
+      const tagList = tags ? tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+
       this.isLoading.set(true);
       this.successMessage.set(null);
       this.errorMessage.set(null);
 
-      this.itemService.ingestUrl(url).subscribe({
+      this.itemService.ingestUrl(url!, tagList).subscribe({
         next: (response) => {
-          this.successMessage.set("Ingestion started. Job ID: ${response.jobId.slice(0, 8)} ..");
+          this.successMessage.set(`Ingestion started. Job ID: ${response.jobId.slice(0, 8)} ..`);
           this.ingestForm.reset();
           this.isLoading.set(false);
         },

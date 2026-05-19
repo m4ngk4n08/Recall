@@ -17,7 +17,7 @@ namespace Recall.Api.Services
             _embeddingService = embeddingService;
             _itemRepository = itemRepository;
         }
-        public async Task<Guid> IngestFromUrlAsync(string url)
+        public async Task<Guid> IngestFromUrlAsync(string url, List<string> tags)
         {
             // 1. Extract content
             var (title, content, sourceType) = await _extractionService.ExtractFromUrlAsync(url);
@@ -30,7 +30,7 @@ namespace Recall.Api.Services
                 SourceType = sourceType,
                 SourceUrl = url,
                 SavedAt = DateTime.UtcNow,
-                Tags = new List<string>()
+                Tags = tags ?? new List<string>()
             };
             await _itemRepository.CreateAsync(parent);
 
@@ -52,7 +52,7 @@ namespace Recall.Api.Services
                     SourceType = sourceType,
                     SourceUrl = url,
                     SavedAt = DateTime.UtcNow,
-                    Tags = new List<string>(),
+                    Tags = tags ?? new List<string>(),
                     ParentId = parent.Id,
                     ChunkIndex = i,
                     Embedding = new Vector(embeddings[i])
