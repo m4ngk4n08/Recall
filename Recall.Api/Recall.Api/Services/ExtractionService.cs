@@ -109,16 +109,12 @@ namespace Recall.Api.Services
             var description = doc.DocumentNode.SelectSingleNode("//meta[@name='description']")?.GetAttributeValue("content", null)
                               ?? doc.DocumentNode.SelectSingleNode("//meta[@property='og:description']")?.GetAttributeValue("content", null);
 
-            var text = mainContent.InnerText;
-            
-            // Cleanup whitespace and special chars
-            text = Regex.Replace(text, @"[^a-zA-Z0-9\s.,!?;:'""()\[\]{}\-_]", "");
-            text = Regex.Replace(text, @"\s+", " ").Trim();
+            var text = SanitizeContent(mainContent.InnerText);
 
             // Prepend description if it's not already at the start of the text
             if (!string.IsNullOrEmpty(description))
             {
-                description = description.Trim();
+                description = SanitizeContent(description);
                 if (!text.StartsWith(description.Substring(0, Math.Min(20, description.Length))))
                 {
                     text = description + ". " + text;
@@ -144,7 +140,7 @@ namespace Recall.Api.Services
                 content += "\n" + string.Join(" ", captions.Captions.Select(c => c.Text));
             }
 
-            return (title, content, "YouTube");
+            return (title, SanitizeContent(content), "YouTube");
         }
 
         private async Task<(string Title, string Content, string SourceType)> ExtractPdfAsync(string url)
@@ -162,7 +158,20 @@ namespace Recall.Api.Services
             }
             var title = Path.GetFileNameWithoutExtension(new Uri(url).AbsolutePath ?? "PDF Document");
             
-            return (title, text, "PDF");
+            return (title, SanitizeContent(text), "PDF");
+        }
+
+        private string SanitizeContent(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+            // Remove non-ASCII/unnecessary characters, keeping English words, numbers and basic punctuation
+            string sanitized = Regex.Replace(text, @"[^a-zA-Z0-9\s.,!?;:'""()\[\]{}\-_]", "");
+            
+            // Normalize whitespace
+            sanitized = Regex.Replace(sanitized, @"\s+", " ").Trim();
+            
+            return sanitized;
         }
     }
 }
