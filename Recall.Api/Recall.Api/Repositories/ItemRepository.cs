@@ -62,9 +62,8 @@ namespace Recall.Api.Repositories
 
         public async Task<IEnumerable<Item>> GetByTagAsync(string tag)
         {
-            return await _context.Items
-                .Where(i => i.Tags.Contains(tag))
-                .ToListAsync();
+            var result = await _context.Items.ToListAsync();
+            return result.Where(j => j.Tags.Contains(tag, StringComparer.OrdinalIgnoreCase));
         }
     }
 }
