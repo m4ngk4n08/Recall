@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using Recall.Api.Services.Interfaces;
+using System.Text;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig;
 using YoutubeExplode;
@@ -67,8 +68,6 @@ namespace Recall.Api.Services
         {
             if (url.Contains("youtube.com") || url.Contains("youtu.be"))
                 return await ExtractYouTubeAsync(url);
-            if(url.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                return await ExtractPdfAsync(url);
 
             return await ExtractWebAsync(url);
         }
@@ -143,24 +142,7 @@ namespace Recall.Api.Services
             return (title, SanitizeContent(content), "YouTube");
         }
 
-        private async Task<(string Title, string Content, string SourceType)> ExtractPdfAsync(string url)
-        {
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-            string text = "";
-
-            using(var stream = new MemoryStream(pdfBytes))
-            using(var pdf = PdfDocument.Open(stream))
-            {
-                foreach (var page in pdf.GetPages())
-                    text += page.Text;
-            }
-            var title = Path.GetFileNameWithoutExtension(new Uri(url).AbsolutePath ?? "PDF Document");
-            
-            return (title, SanitizeContent(text), "PDF");
-        }
-
+        
         private string SanitizeContent(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return string.Empty;
@@ -172,6 +154,48 @@ namespace Recall.Api.Services
             sanitized = Regex.Replace(sanitized, @"\s+", " ").Trim();
             
             return sanitized;
+        }
+
+        public async Task<(string Title, string Content, string SourceType)> ExtractPdfAsync(Stream stream, string fileName)
+        {
+            try
+            {
+                // Copy to a seekable memorystream
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                // Open the pdf
+                using var document = PdfDocument.Open(memoryStream);
+
+                //Get title from metadata or fallback to filename
+                var title = document.Information.Title;
+                if (string.IsNullOrEmpty(title))
+                {
+                    title = Path.GetFileNameWithoutExtension(fileName);
+                }
+
+                var textBuilder = new StringBuilder();
+                foreach(var page in document.GetPages())
+                {
+                    var pageText = page.Text;
+                    if (!string.IsNullOrWhiteSpace(pageText))
+                    {
+                        // AppendLine ensures words don't megrge across page breaks
+                        textBuilder.AppendLine(pageText);
+                    }
+                }
+
+                // Clean up the content using your existing sanitizer
+                var content = SanitizeContent(textBuilder.ToString());
+
+                return (title, content, "PDF");
+            }
+            catch (Exception ex)
+            {
+                // log error and return fallback info
+                return (Path.GetFileNameWithoutExtension(fileName), $"Error extracting PDF content: {ex.Message}", "PDF");
+            }
         }
     }
 }

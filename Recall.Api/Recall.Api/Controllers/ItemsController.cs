@@ -212,5 +212,29 @@ namespace Recall.Api.Controllers
 
             return Ok(results);
         }
+
+        [HttpPost("upload")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> UploadPdf(IFormFile file, [FromForm] string tags = "")
+        {
+            if(file == null || file.Length == 0)
+                return BadRequest("File is required.");
+
+            if (Path.GetExtension(file.FileName).ToLower() != ".pdf")
+                return BadRequest("Only PDF files are supported.");
+
+            // Parse tags from comma-separated string if provided
+            var tagList = tags?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(j => j.Trim())
+                .ToList() ?? new List<string>();
+
+            using var stream = file.OpenReadStream();
+
+            //ingest the file
+            var parentId = await _ingestionService.IngestFileAsync(stream, file.FileName, tagList);
+
+            return Accepted(new { jobId = parentId, message = "PDF Ingestion completed successfully." });
+        }
     }
 }
