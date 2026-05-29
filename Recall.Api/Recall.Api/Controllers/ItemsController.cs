@@ -39,64 +39,6 @@ namespace Recall.Api.Controllers
 
         // ... existing methods ...
 
-        [HttpPost("chat")]
-        public async Task<IActionResult> Chat([FromBody] ChatRequestDto request)
-        {
-            if (string.IsNullOrWhiteSpace(request.Query))
-                return BadRequest("Query cannot be empty.");
-
-            // 1. Retrieve relevant context (Reuse search logic)
-            var queryVector = await _embeddingService.GenerateEmbeddingAsync(request.Query);
-            var vector = new Vector(queryVector);
-
-            var sources = await _dbContext.Items
-                .AsNoTracking()
-                .Where(i => i.Embedding != null)
-                .Select(i => new SearchResultDto
-                {
-                    Id = i.Id,
-                    Title = i.Title,
-                    Content = i.Content,
-                    SourceType = i.SourceType,
-                    SourceUrl = i.SourceUrl,
-                    SavedAt = i.SavedAt,
-                    Tags = i.Tags,
-                    ParentId = i.ParentId,
-                    ChunkIndex = i.ChunkIndex,
-                    Distance = i.Embedding.CosineDistance(vector)
-                })
-                .Where(r => (1 - r.Distance) >= 0.5) // Slightly more lenient for chat context
-                .OrderBy(r => r.Distance)
-                .Take(5) // Top 5 chunks for context
-                .ToListAsync();
-
-            if (!sources.Any())
-            {
-                return Ok(new ChatResponseDto 
-                { 
-                    Answer = "I couldn't find any relevant information in your documents to answer this question.",
-                    Sources = new List<SearchResultDto>()
-                });
-            }
-
-            // 2. Format context for the LLM
-            var contextBuilder = new StringBuilder();
-            foreach (var source in sources)
-            {
-                contextBuilder.AppendLine($"--- Document: {source.Title} ---");
-                contextBuilder.AppendLine(source.Content);
-                contextBuilder.AppendLine();
-            }
-
-            // 3. Generate answer using Ollama
-            var answer = await _ollamaService.GenerateAnswerAsync(request.Query, contextBuilder.ToString(), request.Model);
-
-            return Ok(new ChatResponseDto
-            {
-                Answer = answer,
-                Sources = sources
-            });
-        }
 
         [HttpGet("getall")]
         [ProducesResponseType(typeof(IEnumerable<ItemResponseDto>), 200)]
@@ -150,27 +92,6 @@ namespace Recall.Api.Controllers
             return deleted ? Ok() : NotFound();
         }
 
-        [HttpPost("ingest")]
-        [ProducesResponseType(typeof(ItemResponseDto), 200)]
-        public async Task<IActionResult> IngestUrl([FromBody] IngestUrlDto dto)
-        {
-            if(string.IsNullOrEmpty(dto.Url)) 
-                return BadRequest("URL cannot be empty.");
-
-            // Run ingestion in background (fire and forget for simplicity, but we'll wait)
-            var parentId = await _ingestionService.IngestFromUrlAsync(dto.Url, dto.Tags);
-            return Accepted(new {jobId = parentId, message = "Ingestion started. Check back later for results." });
-        }
-
-        [HttpGet("debug")]
-        public async Task<IActionResult> Debug()
-        {
-            var total = await _dbContext.Items.CountAsync();
-            var withParent = await _dbContext.Items.CountAsync(i => i.ParentId != null);
-            var withEmbedding = await _dbContext.Items.CountAsync(i => i.Embedding != null);
-            return Ok(new { total, withParent, withEmbedding });
-        }
-
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 10)
         {
@@ -213,28 +134,5 @@ namespace Recall.Api.Controllers
             return Ok(results);
         }
 
-        [HttpPost("upload")]
-        [ProducesResponseType(202)]
-        [ProducesResponseType(400)]
-        public async Task<IActionResult> UploadPdf(IFormFile file, [FromForm] string tags = "")
-        {
-            if(file == null || file.Length == 0)
-                return BadRequest("File is required.");
-
-            if (Path.GetExtension(file.FileName).ToLower() != ".pdf")
-                return BadRequest("Only PDF files are supported.");
-
-            // Parse tags from comma-separated string if provided
-            var tagList = tags?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(j => j.Trim())
-                .ToList() ?? new List<string>();
-
-            using var stream = file.OpenReadStream();
-
-            //ingest the file
-            var parentId = await _ingestionService.IngestFileAsync(stream, file.FileName, tagList);
-
-            return Accepted(new { jobId = parentId, message = "PDF Ingestion completed successfully." });
-        }
     }
 }

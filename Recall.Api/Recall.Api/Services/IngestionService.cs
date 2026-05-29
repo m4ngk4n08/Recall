@@ -81,7 +81,7 @@ namespace Recall.Api.Services
                 return parent.Id;
 
             // 4. Generate embeddings in batch
-            var embeddings = await _embeddingService.GenerateEmbeddingsListAsync(chunks);
+            var embeddings = await _embeddingService.GenerateEmbeddingsListAsync(chunks, ingest.Title);
 
             // 5. Save each chunk as Item
             for (int i = 0; i < chunks.Count; i++)
@@ -89,7 +89,7 @@ namespace Recall.Api.Services
                 var chunkItem = new Item
                 {
                     Title = $"{ingest.Title} - Chunk {i + 1}",
-                    Content = ingest.Content,
+                    Content = chunks[i],
                     SourceType = ingest.SourceType,
                     SourceUrl = ingest.Url,
                     SavedAt = DateTime.UtcNow,
