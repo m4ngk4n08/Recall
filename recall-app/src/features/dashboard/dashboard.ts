@@ -33,9 +33,41 @@ export class Dashboard implements OnInit {
   readonly isSearching = signal(false);
   readonly selectedItem = signal<Item | SearchResult | null>(null);
 
-  // Derive state: count of items
-  readonly itemCount = computed(() => this.items().length);
+  // Add a signal to trach which titles are expanded
+  readonly expandedTitles = signal<Set<string>>(new Set());
+  
+  // Create a computed signal to group items by title
+  readonly groupedItems = computed(() => {
+    const items = this.items();
+    const groups = new Map<string, Item[]>();
 
+    // Grouping chunks by title
+    items.forEach(item => {
+      const displayTitle = item.title.replace(/ - Chunk \d+$/, ''); // Remove chunk suffix for grouping
+      if(!groups.has(displayTitle)){
+        groups.set(displayTitle, []);
+      }
+      groups.get(displayTitle)!.push(item);
+    });
+
+    // Transform the map into an array of group objects
+    return Array.from(groups.entries()).map(([title, chunks]) => {
+      const sortedChunks = chunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+
+      return {
+        title,
+        chunks: sortedChunks,
+        // Collect unique tags across all chunks
+        tags: Array.from(new Set(chunks.flatMap(chunk => chunk.tags))),
+        sourceType: chunks[0].sourceType,
+        isExpanded: this.expandedTitles().has(title)
+      };
+    });
+  });
+
+  // Derive state: count of groups (unique documents)
+  readonly itemCount = computed(() => this.groupedItems().length);
+  
   constructor() {
     // Basic search debouncing effect
     effect(() => {
@@ -229,5 +261,18 @@ export class Dashboard implements OnInit {
         }
       });
     }
+  }
+
+  // Method to toggle expansion
+  toggleExpand(title: string): void{
+    this.expandedTitles.update(prev => {
+      const next = new Set(prev);
+      if(next.has(title)){
+        next.delete(title);
+      } else {
+        next.add(title);
+      }
+      return next;
+    })
   }
 }

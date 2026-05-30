@@ -88,7 +88,7 @@ namespace Recall.Api.Services
             {
                 var chunkItem = new Item
                 {
-                    Title = $"{ingest.Title} - Chunk {i + 1}",
+                    Title = $"{ingest.Title}",
                     Content = chunks[i],
                     SourceType = ingest.SourceType,
                     SourceUrl = ingest.Url,

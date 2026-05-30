@@ -79,48 +79,67 @@
             <div class="spinner"></div>
             <p>Loading items...</p>
           </div>
-        } @else if (items().length === 0) {
+        } @else if (groupedItems().length === 0) {
           <div class="empty-state">
             <p>No items found for this topic.</p>
           </div>
         } @else {
           <div class="items-grid">
-            @for (item of items(); track item.id) {
-              <div [id]="'item-' + item.id" class="item-card card" (click)="selectedItem.set(item)">
-                @if (editingId() !== item.id) {
-                  <div class="card-content">
-                    <div class="card-header">
-                      <h3>{{ item.title }}</h3>
-                      <span class="badge">{{ item.sourceType }}</span>
+            @for (group of groupedItems(); track group.title) {
+              <div class="group-container" [class.expanded]="group.isExpanded">
+                <div class="group-card card" (click)="toggleExpand(group.title)">
+                  <div class="group-header">
+                    <div class="title-wrapper">
+                      <h3>{{ group.title }}</h3>
+                      <span class="chunk-count">{{ group.chunks.length }} chunks</span>
                     </div>
-                    <p class="excerpt">{{ item.content | slice:0:150 }}{{ item.content.length > 150 ? '…' : '' }}</p>
-                    <div class="tags">
-                      @for (tag of item.tags; track tag) {
-                        <span class="tag-pill" (click)="$event.stopPropagation(); selectTopic(tag)">{{ tag }}</span>
-                      }
-                    </div>
-                    <div class="card-footer">
-                      <span class="date">{{ item.saveAt | date:'mediumDate' }}</span>
-                      <div class="actions">
-                        <button class="icon-btn edit" (click)="$event.stopPropagation(); startEdit(item)" title="Edit">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="icon-btn delete" (click)="$event.stopPropagation(); deleteItem(item.id, item.title)" title="Delete">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                        </button>
-                      </div>
-                    </div>
+                    <span class="badge">{{ group.sourceType }}</span>
                   </div>
-                } @else {
-                  <form [formGroup]="editForm" (ngSubmit)="updateItem(item.id)" class="edit-form" (click)="$event.stopPropagation()">
-                    <input formControlName="title" class="input-field" placeholder="Title" />
-                    <textarea formControlName="content" class="input-field" rows="4" placeholder="Content"></textarea>
-                    <input type="text" [(ngModel)]="editTagInputValue" [ngModelOptions]="{standalone: true}" class="input-field" placeholder="Tags (comma separated)" />
-                    <div class="edit-actions">
-                      <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isLoading()">Save</button>
-                      <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
-                    </div>
-                  </form>
+                  
+                  <div class="tags">
+                    @for (tag of group.tags; track tag) {
+                      <span class="tag-pill" (click)="$event.stopPropagation(); selectTopic(tag)">{{ tag }}</span>
+                    }
+                  </div>
+
+                  <div class="expand-indicator">
+                    <svg [class.rotate]="group.isExpanded" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </div>
+
+                @if (group.isExpanded) {
+                  <div class="expanded-content">
+                    @for (item of group.chunks; track item.id) {
+                      <div [id]="'item-' + item.id" class="chunk-item card" (click)="selectedItem.set(item)">
+                        @if (editingId() !== item.id) {
+                          <div class="card-content">
+                            <p class="excerpt">{{ item.content }}</p>
+                            <div class="card-footer">
+                              <span class="date">{{ item.saveAt | date:'mediumDate' }}</span>
+                              <div class="actions">
+                                <button class="icon-btn edit" (click)="$event.stopPropagation(); startEdit(item)" title="Edit">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button class="icon-btn delete" (click)="$event.stopPropagation(); deleteItem(item.id, item.title)" title="Delete">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        } @else {
+                          <form [formGroup]="editForm" (ngSubmit)="updateItem(item.id)" class="edit-form" (click)="$event.stopPropagation()">
+                            <input formControlName="title" class="input-field" placeholder="Title" />
+                            <textarea formControlName="content" class="input-field" rows="4" placeholder="Content"></textarea>
+                            <input type="text" [(ngModel)]="editTagInputValue" [ngModelOptions]="{standalone: true}" class="input-field" placeholder="Tags (comma separated)" />
+                            <div class="edit-actions">
+                              <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isLoading()">Save</button>
+                              <button type="button" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
+                            </div>
+                          </form>
+                        }
+                      </div>
+                    }
+                  </div>
                 }
               </div>
             }
