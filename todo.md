@@ -16,6 +16,7 @@ reorganize the chunk card interface(done)
 
 // add ingestion for a note dump or thought dump.
 
+// login and registration
 
 
 // chat history
