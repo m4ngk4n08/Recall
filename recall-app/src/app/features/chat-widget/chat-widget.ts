@@ -2,7 +2,8 @@ import { Component, ElementRef, inject, signal, ViewChild, AfterViewChecked } fr
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../core/services/chat.service';
-import { ChatResponse, SearchResult } from '../../models/item.model';
+import { SearchResult } from '../../models/item.model';
+import { ChatResponse } from '../../models/chat.model';
 
 interface Message {
   text: string;
@@ -23,6 +24,10 @@ export class ChatWidgetComponent implements AfterViewChecked {
   isOpen = signal(false);
   isLoading = signal(false);
   userInput = signal('');
+
+  // Keep track of the current conversation ID for context (optional, can be set after first response)
+  currentConversationId = signal<string | undefined>(undefined);
+
   messages = signal<Message[]>([
     { text: 'Hello! I am your Recall assistant. Ask me anything about your documents.', sender: 'bot' }
   ]);
@@ -37,6 +42,13 @@ export class ChatWidgetComponent implements AfterViewChecked {
     this.isOpen.update(v => !v);
   }
 
+  startNewChat(){
+    this.currentConversationId.set(undefined);
+    this.messages.set([
+      { text: 'Hello! I am your Recall assistant. Ask me anything about your documents.', sender: 'bot' }
+    ]);
+  }
+
   async sendMessage() {
     const query = this.userInput().trim();
     if (!query || this.isLoading()) return;
@@ -46,8 +58,17 @@ export class ChatWidgetComponent implements AfterViewChecked {
     this.userInput.set('');
     this.isLoading.set(true);
 
-    this.chatService.sendChat({ query }).subscribe({
+    // Send to backend(including the converstationId if we have one)
+    this.chatService.sendChat({ 
+      query,
+      conversationId: this.currentConversationId() 
+    }).subscribe({
       next: (res: ChatResponse) => {
+
+        // Store the ID returned by backend so follow-ups work
+        this.currentConversationId.set(res.conversationId);
+
+        // Add AI response to UI
         this.messages.update(m => [...m, { 
           text: res.answer, 
           sender: 'bot',

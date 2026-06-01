@@ -15,6 +15,8 @@ namespace Recall.Api.Data
         }
 
         public DbSet<Item> Items { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +50,15 @@ namespace Recall.Api.Data
                     .HasOperators("vector_cosine_ops");
 
                 entity.Property(e => e.ChunkIndex);
+
+            });
+
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(m => m.Conversation)
+                    .WithMany(m => m.Messages)
+                    .HasForeignKey(m => m.ConversationId);
             });
             
         }

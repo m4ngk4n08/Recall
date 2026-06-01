@@ -23,13 +23,3 @@ export interface SearchResult extends Item {
 export type CreateItemDto = Omit<Item, 'id' | 'saveAt'>;
 
 export type UpdateItemDto = Partial<CreateItemDto>;
-
-export interface ChatRequest {
-    query: string;
-    model?: string;
-}
-
-export interface ChatResponse {
-    answer: string;
-    sources: SearchResult[];
-}

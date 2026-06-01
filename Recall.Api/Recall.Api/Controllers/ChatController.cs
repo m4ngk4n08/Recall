@@ -4,6 +4,8 @@ using Pgvector;
 using Pgvector.EntityFrameworkCore;
 using Recall.Api.Data;
 using Recall.Api.DTOs;
+using Recall.Api.DTOs.Chat;
+using Recall.Api.Models;
 using Recall.Api.Services.Interfaces;
 using System.Text;
 
@@ -33,9 +35,46 @@ namespace Recall.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.Query))
                 return BadRequest("Query cannot be empty.");
 
-            // 1. Retrieve relevant context (Reuse search logic)
+            // 1. Get or Create Conversation
+            Conversation? conversation;
+            if (request.ConversationId.HasValue)
+            {
+                conversation = await _dbContext.Conversations
+                    .Include(c => c.Messages)
+                    .FirstOrDefaultAsync(c => c.Id == request.ConversationId.Value);
+
+                if(conversation == null)
+                    return NotFound("Conversation not found.");
+            }
+            else
+            {
+                conversation = new Conversation { Title = request.Query.Length > 50 ? request.Query[..50] : request.Query };
+                _dbContext.Conversations.Add(conversation);
+            }
+
+            // 2. Save User Message
+            var userMessage = new ChatMessage
+            {
+                ConversationId = conversation.Id,
+                Role = "user",
+                Content = request.Query
+            };
+
+            _dbContext.ChatMessages.Add(userMessage);
+            await _dbContext.SaveChangesAsync();
+
+            // 3. Get history for Ollama(last 10 messages)
+            var history = await _dbContext.ChatMessages
+                .Where(m => m.ConversationId == conversation.Id && m.Id != userMessage.Id)
+                .OrderByDescending(m => m.Timestamp)
+                .Take(10)
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new ChatMessageDto { Role = m.Role, Content = m.Content })
+                .ToListAsync();
+
+            // 4. Retrieve Document Context(RAG)
             var queryVector = await _embeddingService.GenerateEmbeddingAsync(request.Query);
-            var vector = new Vector(queryVector);
+            var vector = new Pgvector.Vector(queryVector);
 
             var sources = await _dbContext.Items
                 .AsNoTracking()
@@ -45,45 +84,58 @@ namespace Recall.Api.Controllers
                     Id = i.Id,
                     Title = i.Title,
                     Content = i.Content,
-                    SourceType = i.SourceType,
-                    SourceUrl = i.SourceUrl,
-                    SavedAt = i.SavedAt,
-                    Tags = i.Tags,
-                    ParentId = i.ParentId,
-                    ChunkIndex = i.ChunkIndex,
-                    Distance = i.Embedding.CosineDistance(vector)
+                    Distance = vector.CosineDistance(i.Embedding)
                 })
-                .Where(r => (1 - r.Distance) >= 0.5) // Slightly more lenient for chat context
+                .Where(r => (1 - r.Distance) >= 0.5)
                 .OrderBy(r => r.Distance)
-                .Take(5) // Top 5 chunks for context
+                .Take(5)
                 .ToListAsync();
 
-            if (!sources.Any())
-            {
-                return Ok(new ChatResponseDto
-                {
-                    Answer = "I couldn't find any relevant information in your documents to answer this question.",
-                    Sources = new List<SearchResultDto>()
-                });
-            }
+            var context = string.Join("\n\n", sources.Select(s => $"Title: {s.Title}\nContent: {s.Content}"));
 
-            // 2. Format context for the LLM
-            var contextBuilder = new StringBuilder();
-            foreach (var source in sources)
-            {
-                contextBuilder.AppendLine($"--- Document: {source.Title} ---");
-                contextBuilder.AppendLine(source.Content);
-                contextBuilder.AppendLine();
-            }
+            // 5. Generate AI Response
+            var answer = await _ollamaService.GenerateChatResponseAsync(request.Query, context, history, request.Model);
 
-            // 3. Generate answer using Ollama
-            var answer = await _ollamaService.GenerateAnswerAsync(request.Query, contextBuilder.ToString(), request.Model);
+            // 6. Save AI Message
+            var assistantMessage = new ChatMessage
+            {
+                ConversationId = conversation.Id,
+                Role = "assistant",
+                Content = answer
+            };
+            
+            _dbContext.ChatMessages.Add(assistantMessage);
+            await _dbContext.SaveChangesAsync();
 
             return Ok(new ChatResponseDto
             {
                 Answer = answer,
+                ConversationId = conversation.Id,
                 Sources = sources
             });
+        }
+
+        [HttpGet("history/{conversationId}")]
+        public async Task<IActionResult> GetChatHistory(Guid conversationId)
+        {
+            // Fetch all mesages for this conversation, ordered by time
+            var messages = await _dbContext.ChatMessages
+                .Where(m => m.ConversationId == conversationId)
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new ChatMessageDto
+                {
+                    Role = m.Role,
+                    Content = m.Content,
+                    TimeStamp = m.Timestamp
+                })
+                .ToListAsync();
+
+            if(messages == null || messages.Count == 0)
+            {
+                return NotFound("No history found for this conversation.");
+            }
+
+            return Ok(messages);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Recall.Api.DTOs.Chat;
 using Recall.Api.Services.Interfaces;
 
 namespace Recall.Api.Services
@@ -8,7 +9,7 @@ namespace Recall.Api.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<OllamaService> _logger;
-        private const string OllamaEndpoint = "http://localhost:11434/api/generate";
+        private const string OllamaEndpoint = "http://localhost:11434/api";
 
         public OllamaService(HttpClient httpClient, ILogger<OllamaService> logger)
         {
@@ -35,7 +36,7 @@ namespace Recall.Api.Services
             try
             {
                 var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync(OllamaEndpoint, content);
+                var response = await _httpClient.PostAsync($"{OllamaEndpoint}/generate", content);
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -69,5 +70,63 @@ namespace Recall.Api.Services
                 return $"Error: {ex.Message}";
             }
         }
+
+        public async Task<string> GenerateChatResponseAsync(string query, string context, List<ChatMessageDto> conversationHistory, string model = "llama3")
+        {
+            var messages = new List<object>();
+
+            // 1. Add System Message with Context
+            messages.Add(new
+            {
+                role = "system",
+                content = "You are a helpful assistant for the 'Recall' application. " +
+                          "Use the following pieces of retrieved context to answer the user's question. " +
+                          "If you don't know the answer or it's not in the context, just say that you don't know based on the provided documents. " +
+                          "Keep the answer concise.\n\n" +
+                          $"Context:\n{context}"
+            });
+
+            // 2. Add Histroy (Previous back-and-forth messages)
+            foreach (var message in conversationHistory)
+            {
+                messages.Add(new { role = message.Role, content = message.Content
+                });
+            };
+
+            // 3. Add Current User Query
+            messages.Add(new { role = "user", content = query });
+
+            var requestBody = new
+            {
+                model = model,
+                messages = messages, // Structured list of messages
+                stream = false
+            };
+
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{OllamaEndpoint}/chat", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Ollama returned errror: {StatusCode}. Body: {ErrorBody}", response.StatusCode, errorBody);
+                    return "Error: Ollama returned {response.StatusCode}. Check server logs.";
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(jsonResponse);
+                return doc.RootElement.GetProperty("message").GetProperty("content").GetString() ?? "No response";
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error calling Ollama API.");
+                return $"Error: {ex.Message}";
+            }
+
+        }
     }
 }
+
