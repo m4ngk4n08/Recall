@@ -1,4 +1,5 @@
 ﻿using Recall.Api.DTOs;
+using Recall.Api.DTOs.Item;
 
 namespace Recall.Api.Services.Interfaces
 {

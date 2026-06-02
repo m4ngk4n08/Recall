@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
 using Recall.Api.Data;
-using Recall.Api.DTOs;
+using Recall.Api.DTOs.Ingest;
+using Recall.Api.DTOs.Item;
 using Recall.Api.Services.Interfaces;
 
 namespace Recall.Api.Controllers
@@ -60,6 +61,19 @@ namespace Recall.Api.Controllers
             var parentId = await _ingestionService.IngestFileAsync(stream, file.FileName, tagList);
 
             return Accepted(new { jobId = parentId, message = "PDF Ingestion completed successfully." });
+        }
+
+        [HttpPost("Thought")]
+        [ProducesResponseType(typeof(object), 202)]
+        public async Task<IActionResult> Thought([FromBody] IngestThoughDto dto)
+        {
+            if(string.IsNullOrWhiteSpace(dto.Content))
+                return BadRequest("Content cannot be empty.");
+
+            var parentId = await _ingestionService.IngestThoughAsync(dto);
+            
+            return Accepted(new { jobId = parentId, message = "Thought ingestion started. Check back later for results." });
+        
         }
     }
 }

@@ -1,8 +1,7 @@
-﻿namespace Recall.Api.DTOs
+﻿namespace Recall.Api.DTOs.Item
 {
-    public class ItemUpdateDto
+    public class ItemCreateDto
     {
-        public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string SourceType { get; set; } = "note";

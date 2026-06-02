@@ -1,4 +1,4 @@
-﻿namespace Recall.Api.DTOs
+﻿namespace Recall.Api.DTOs.Ingest
 {
     public class IngestUrlDto
     {

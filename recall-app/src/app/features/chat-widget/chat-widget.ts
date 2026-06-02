@@ -58,22 +58,11 @@ loadConversation(id: string){
   })
 }
 
-// Fetch the list when the chat is opened
+// Load a specific chat's message when clicked
 loadHistoryList(){
   this.chatService.getChatConversations().subscribe(list => {
     this.pastConversations.set(list);
   });
-}
-
-// Load a specific chat's message when clicked
-selectConversations(id: string){
-  this.currentConversationId.set(id);
-  this.chatService.getChatHistory(id).subscribe(messages => {
-    this.messages.set(messages.map(m => ({
-      text: m.content,
-      sender: m.role === 'user' ? 'user' : 'bot'
-    })))
-  })
 }
 
 // Delete conversation
@@ -87,7 +76,7 @@ deleteConversation(event: Event, id: string){
         if(this.currentConversationId() === id){
           this.startNewChat();
         }
-      // Refersh the sidebar list
+      // Refresh the sidebar list
       this.loadHistoryList();
       }
     })

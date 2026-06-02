@@ -5,6 +5,7 @@ using Pgvector;
 using Pgvector.EntityFrameworkCore;
 using Recall.Api.Data;
 using Recall.Api.DTOs;
+using Recall.Api.DTOs.Item;
 using Recall.Api.Services.Interfaces;
 using System.Text;
 

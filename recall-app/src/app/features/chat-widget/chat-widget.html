@@ -16,8 +16,13 @@
              (click)="loadConversation(chat.id)"
              class="history-item"
              [class.active]="currentConversationId() === chat.id">
-          <div class="chat-title">{{ chat.title }}</div>
-          <div class="chat-date">{{ chat.lastMessageAt | date:'shortDate' }}</div>
+          <div class="history-item-content">
+            <div class="chat-title" [title]="chat.title">{{ chat.title }}</div>
+            <div class="chat-date">{{ chat.lastMessageAt | date:'shortDate' }}</div>
+          </div>
+          <button class="delete-chat-btn" (click)="deleteConversation($event, chat.id)" title="Delete Chat">
+            🗑️
+          </button>
         </div>
       </div>
     </div>

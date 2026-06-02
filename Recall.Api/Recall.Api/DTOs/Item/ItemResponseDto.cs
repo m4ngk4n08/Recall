@@ -1,4 +1,4 @@
-﻿namespace Recall.Api.DTOs;
+﻿namespace Recall.Api.DTOs.Item;
 
 public class ItemResponseDto
 {

@@ -9,5 +9,9 @@ export const routes: Routes = [
         path: 'ingest',
         loadComponent: () => import('../features/url-ingestor/url-ingestor').then(m => m.UrlIngestor)
     },
+    {
+        path: 'note',
+        loadComponent: () => import('../features/thought-dump/thought-dump').then(m => m.ThoughtDump)
+    },
     { path: '**', redirectTo: '' }
 ];

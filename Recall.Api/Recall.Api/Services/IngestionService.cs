@@ -2,6 +2,7 @@
 using Google.GenAI.Types;
 using Microsoft.Extensions.AI;
 using Pgvector;
+using Recall.Api.DTOs.Ingest;
 using Recall.Api.Models;
 using Recall.Api.Repositories.Interfaces;
 using Recall.Api.Services.Interfaces;
@@ -59,6 +60,19 @@ namespace Recall.Api.Services
             var parentId = await IngestHelper(ingest);
 
             return parentId;
+        }
+
+        public async Task<Guid> IngestThoughAsync(IngestThoughDto dto)
+        {
+            var ingest = new IngestHelper
+            {
+                Title = string.IsNullOrWhiteSpace(dto.Title) ? "Quick Note" : dto.Title,
+                Content = dto.Content,
+                SourceType = "Note",
+                Tags = dto.Tags
+            };
+
+            return await IngestHelper(ingest);
         }
 
         private async Task<Guid> IngestHelper(IngestHelper ingest)

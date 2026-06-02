@@ -35,10 +35,6 @@ export class ItemService{
         return this.http.delete<void>(`${this.apiItemUrl}/${id}`);
     }
 
-    ingestUrl(url: string, tags: string[] = []): Observable<{ jobId: string; message: string}>{
-        return this.http.post<{ jobId: string; message: string }>(`${this.apiIngestUrl}/url`, { url, tags });
-    }
-
     search(query: string, limit: number = 10): Observable<SearchResult[]>{
         return this.http.get<SearchResult[]>(`${this.apiItemUrl}/search`, { params: {q: query, limit } });
     }

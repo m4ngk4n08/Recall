@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using Recall.Api.DTOs;
+using Recall.Api.DTOs.Item;
 using Recall.Api.Models;
 using Recall.Api.Repositories.Interfaces;
 using Recall.Api.Services.Interfaces;

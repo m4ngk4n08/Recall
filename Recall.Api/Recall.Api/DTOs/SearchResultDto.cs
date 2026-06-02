@@ -1,4 +1,6 @@
-﻿namespace Recall.Api.DTOs
+﻿using Recall.Api.DTOs.Item;
+
+namespace Recall.Api.DTOs
 {
     public class SearchResultDto : ItemResponseDto
     {

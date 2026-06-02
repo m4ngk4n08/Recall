@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Recall.Api.DTOs;
+using Recall.Api.DTOs.Item;
 using Recall.Api.Models;
 
 namespace Recall.Api.Mappings

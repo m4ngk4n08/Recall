@@ -6,8 +6,8 @@ import { ChatMessageDto, ChatRequest, ChatResponse } from "../../app/models/chat
 
 @Injectable({ providedIn: "root" })
 export class ChatService {
-        private readonly http = inject(HttpClient);
-        private readonly apiUrl = API_ENDPOINTS.chat;
+    private readonly http = inject(HttpClient);
+    private readonly apiUrl = API_ENDPOINTS.chat;
 
     sendChat(request: ChatRequest): Observable<ChatResponse> {
         return this.http.post<ChatResponse>(`${this.apiUrl}/chat`, request);
