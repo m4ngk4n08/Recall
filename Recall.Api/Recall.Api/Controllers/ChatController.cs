@@ -153,5 +153,18 @@ namespace Recall.Api.Controllers
 
             return Ok(messages);
         }
+
+        [HttpDelete("conversations/{id}")]
+        public async Task<IActionResult> DeleteConversation(Guid id)
+        {
+            var conversation = await _dbContext.Conversations.FindAsync(id);
+            if(conversation == null)
+                return NotFound("Conversation not found.");
+            
+            _dbContext.Conversations.Remove(conversation);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

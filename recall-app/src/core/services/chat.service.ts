@@ -21,4 +21,8 @@ export class ChatService {
     getChatConversations(): Observable<{id: string, title: string}[]> {
         return this.http.get<{id: string, title: string}[]>(`${this.apiUrl}/conversations`);
     }
+
+    deleteConversation(conversationId: string): Observable<void>{
+        return this.http.delete<void>(`${this.apiUrl}/conversations/${conversationId}`);
+    }
 }

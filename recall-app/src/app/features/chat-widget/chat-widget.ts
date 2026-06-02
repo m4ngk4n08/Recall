@@ -76,6 +76,24 @@ selectConversations(id: string){
   })
 }
 
+// Delete conversation
+deleteConversation(event: Event, id: string){
+  event.stopPropagation(); // Prevent triggering conversation load
+
+  if(confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+    this.chatService.deleteConversation(id).subscribe({
+      // If the deleted chat was the one we were looking at, start a fresh chat
+      next: () => {
+        if(this.currentConversationId() === id){
+          this.startNewChat();
+        }
+      // Refersh the sidebar list
+      this.loadHistoryList();
+      }
+    })
+  }
+}
+
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
