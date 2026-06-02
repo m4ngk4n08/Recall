@@ -21,6 +21,8 @@ namespace Recall.Api.Services
         {
             var systemPrompt = "You are a helpful assistant for the 'Recall' application. " +
                                "Use the following pieces of retrieved context to answer the user's question. " +
+                               "IMPORTANT: Use Markdown formatting for your response." +
+                               "Use bullet points, numbered lists, and other formatting as appropriate to make the answer clear and easy to read. " +
                                "If you don't know the answer or it's not in the context, just say that you don't know based on the provided documents. " +
                                "Keep the answer concise.\n\n" +
                                $"Context:\n{context}";
@@ -57,12 +59,12 @@ namespace Recall.Api.Services
             catch (TaskCanceledException ex) when (!ex.CancellationToken.IsCancellationRequested)
             {
                 _logger.LogError(ex, "Ollama request timed out.");
-                return "Error: Ollama request timed out. The model might be taking too long to process.";
+                return $"Error: Ollama request timed out. The model might be taking too long to process.";
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "Network error connecting to Ollama.");
-                return "Error: Could not reach Ollama server. Ensure Ollama is running at http://localhost:11434.";
+                return $"Error: Could not reach Ollama server. Ensure Ollama is running at http://localhost:11434.";
             }
             catch (Exception ex)
             {

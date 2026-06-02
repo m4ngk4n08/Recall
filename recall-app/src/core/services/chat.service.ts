@@ -17,4 +17,8 @@ export class ChatService {
     getChatHistory(conversationId: string): Observable<ChatMessageDto[]> {
         return this.http.get<ChatMessageDto[]>(`${this.apiUrl}/history/${conversationId}`);
     }
+
+    getChatConversations(): Observable<{id: string, title: string}[]> {
+        return this.http.get<{id: string, title: string}[]>(`${this.apiUrl}/conversations`);
+    }
 }

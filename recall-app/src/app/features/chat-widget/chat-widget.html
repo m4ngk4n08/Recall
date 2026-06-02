@@ -1,54 +1,75 @@
 <div class="chat-container" [class.open]="isOpen()">
-  <!-- Toggle Button -->
+  <!-- Main Floating Toggle Button -->
   <button class="chat-toggle" (click)="toggleChat()">
     <span *ngIf="!isOpen()">💬</span>
     <span *ngIf="isOpen()">✖</span>
   </button>
 
   <!-- Chat Window -->
-  <div class="chat-window" *ngIf="isOpen()">
-    <div class="chat-header">
-      <h3>Recall AI Chat</h3>
-      <p>Powered by local LLM</p>
-      <button class="new-chat-btn" (click)="startNewChat()" title="Start New Chat">
-        ➕ New
-      </button>
+  <div class="chat-window" *ngIf="isOpen()" [class.with-sidebar]="showHistory()">
+    
+    <!-- Sidebar: Past Conversations (Toggleable) -->
+    <div class="history-sidebar" *ngIf="showHistory()">
+      <div class="sidebar-header">History</div>
+      <div class="history-list">
+        <div *ngFor="let chat of pastConversations()" 
+             (click)="loadConversation(chat.id)"
+             class="history-item"
+             [class.active]="currentConversationId() === chat.id">
+          <div class="chat-title">{{ chat.title }}</div>
+          <div class="chat-date">{{ chat.lastMessageAt | date:'shortDate' }}</div>
+        </div>
+      </div>
     </div>
 
-    <div class="chat-messages" #scrollMe>
-      <div *ngFor="let msg of messages()" class="message-row" [class.user]="msg.sender === 'user'">
-        <div class="message-bubble">
-          <div class="message-text">{{ msg.text }}</div>
-          
-          <div *ngIf="msg.sources && msg.sources.length > 0" class="sources">
-            <p class="source-header">Sources:</p>
-            <ul>
-              <li *ngFor="let s of msg.sources">
-                <a [href]="s.sourceUrl" target="_blank">{{ s.title }}</a>
-              </li>
-            </ul>
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+      <div class="chat-header">
+        <button class="history-toggle" (click)="toggleHistory()" title="Toggle History">
+          ☰
+        </button>
+        <h3>Recall AI Chat</h3>
+        <button class="new-chat-btn" (click)="startNewChat()" title="New Chat">
+          ➕
+        </button>
+      </div>
+
+      <div class="chat-messages" #scrollMe>
+        <div *ngFor="let msg of messages()" class="message-row" [class.user]="msg.sender === 'user'">
+          <div class="message-bubble">
+            <div class="message-text">{{ msg.text }}</div>
+            
+            <div *ngIf="msg.sources && msg.sources.length > 0" class="sources">
+              <p class="source-header">Sources:</p>
+              <ul>
+                <li *ngFor="let s of msg.sources">
+                  <a [href]="s.sourceUrl" target="_blank">{{ s.title }}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Thinking Animation -->
+        <div *ngIf="isLoading()" class="message-row">
+          <div class="message-bubble bot thinking">
+            <span></span><span></span><span></span>
           </div>
         </div>
       </div>
-      
-      <div *ngIf="isLoading()" class="message-row">
-        <div class="message-bubble bot thinking">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-    </div>
 
-    <div class="chat-input">
-      <input 
-        type="text" 
-        [(ngModel)]="userInput" 
-        (keyup.enter)="sendMessage()" 
-        placeholder="Ask about your documents..."
-        [disabled]="isLoading()"
-      />
-      <button (click)="sendMessage()" [disabled]="isLoading() || !userInput().trim()">
-        ➔
-      </button>
+      <div class="chat-input">
+        <input 
+          type="text" 
+          [(ngModel)]="userInput" 
+          (keyup.enter)="sendMessage()" 
+          placeholder="Ask about your documents..."
+          [disabled]="isLoading()"
+        />
+        <button (click)="sendMessage()" [disabled]="isLoading() || !userInput().trim()">
+          ➔
+        </button>
+      </div>
     </div>
   </div>
 </div>

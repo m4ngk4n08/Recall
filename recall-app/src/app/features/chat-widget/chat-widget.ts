@@ -27,12 +27,54 @@ export class ChatWidgetComponent implements AfterViewChecked {
 
   // Keep track of the current conversation ID for context (optional, can be set after first response)
   currentConversationId = signal<string | undefined>(undefined);
+  // Signal to store the list of past conversations
+  showHistory = signal(false);
+  pastConversations = signal<any[]>([]);
 
   messages = signal<Message[]>([
     { text: 'Hello! I am your Recall assistant. Ask me anything about your documents.', sender: 'bot' }
   ]);
 
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
+
+// Toggle and load chat history when the widget is opened
+toggleHistory(){
+  this.showHistory.update(v => !v);
+  if(this.showHistory()) {
+    this.chatService.getChatConversations().subscribe(list => 
+      this.pastConversations.set(list)
+    )
+  }
+}
+
+// Switch conversations
+loadConversation(id: string){
+  this.currentConversationId.set(id);
+  this.chatService.getChatHistory(id).subscribe(msgs => {
+    this.messages.set(msgs.map(m => ({
+      text: m.content,
+      sender: m.role === 'user' ? 'user' : 'bot',
+    })))
+  })
+}
+
+// Fetch the list when the chat is opened
+loadHistoryList(){
+  this.chatService.getChatConversations().subscribe(list => {
+    this.pastConversations.set(list);
+  });
+}
+
+// Load a specific chat's message when clicked
+selectConversations(id: string){
+  this.currentConversationId.set(id);
+  this.chatService.getChatHistory(id).subscribe(messages => {
+    this.messages.set(messages.map(m => ({
+      text: m.content,
+      sender: m.role === 'user' ? 'user' : 'bot'
+    })))
+  })
+}
 
   ngAfterViewChecked() {
     this.scrollToBottom();
@@ -64,9 +106,15 @@ export class ChatWidgetComponent implements AfterViewChecked {
       conversationId: this.currentConversationId() 
     }).subscribe({
       next: (res: ChatResponse) => {
-
+        // Check if this is a brand new conversation
+        const isNewConversation = !this.currentConversationId();
         // Store the ID returned by backend so follow-ups work
         this.currentConversationId.set(res.conversationId);
+
+        // If it was new conversation, refresh the sidebar list immidiately so user can see it
+        if(isNewConversation){
+          this.loadHistoryList();
+        }
 
         // Add AI response to UI
         this.messages.update(m => [...m, { 

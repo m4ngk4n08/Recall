@@ -15,7 +15,7 @@ namespace Recall.Api.Models
         public Guid ConversationId { get; set; }
         public string Role { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public Conversation Conversation { get; set; }
+        public Conversations Conversation { get; set; }
         public string Content { get; set; }
 
     }

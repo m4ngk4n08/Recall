@@ -29,6 +29,21 @@ namespace Recall.Api.Controllers
             _dbContext = dbContext;
         }
 
+        [HttpGet("conversations")]
+        public async Task<IActionResult> GetConversations()
+        {
+            var list = await _dbContext.Conversations
+                .OrderByDescending(c => c.Messages.Max(m => m.Timestamp))
+                .Select(j => new { 
+                    j.Id, 
+                    j.Title,
+                    LastMessageAt = j.Messages.Max(j => j.Timestamp),
+                })
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] ChatRequestDto request)
         {
@@ -36,7 +51,7 @@ namespace Recall.Api.Controllers
                 return BadRequest("Query cannot be empty.");
 
             // 1. Get or Create Conversation
-            Conversation? conversation;
+            Conversations? conversation;
             if (request.ConversationId.HasValue)
             {
                 conversation = await _dbContext.Conversations
@@ -48,7 +63,7 @@ namespace Recall.Api.Controllers
             }
             else
             {
-                conversation = new Conversation { Title = request.Query.Length > 50 ? request.Query[..50] : request.Query };
+                conversation = new Conversations { Title = request.Query.Length > 50 ? request.Query[..50] : request.Query };
                 _dbContext.Conversations.Add(conversation);
             }
 
@@ -84,6 +99,7 @@ namespace Recall.Api.Controllers
                     Id = i.Id,
                     Title = i.Title,
                     Content = i.Content,
+                    SourceUrl = i.SourceUrl,
                     Distance = vector.CosineDistance(i.Embedding)
                 })
                 .Where(r => (1 - r.Distance) >= 0.5)

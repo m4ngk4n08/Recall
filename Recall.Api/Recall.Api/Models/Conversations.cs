@@ -1,6 +1,6 @@
 ﻿namespace Recall.Api.Models
 {
-    public class Conversation
+    public class Conversations
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Title { get; set; } = string.Empty;
