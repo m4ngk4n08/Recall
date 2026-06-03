@@ -11,7 +11,7 @@
    * Implementation: Enhance the ExtractionService with libraries like iTextSharp (PDF) or DocumentFormat.OpenXml
      (Word).
 
-  3. "Thought Dump" / Quick Notes (not yet started)
+  3. "Thought Dump" / Quick Notes (partial done - to be tested)
   A simple "Scratchpad" where you can type or paste text directly without needing a URL.
    * Why: Perfect for capturing fleeting ideas or copy-pasting snippets from apps that don't have a public URL
      (like Slack or Teams).
