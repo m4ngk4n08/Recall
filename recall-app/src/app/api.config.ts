@@ -1,4 +1,6 @@
-const BASE_URL = 'http://localhost:5073/api';
+import { environment } from "../environments/environment"
+
+const BASE_URL  = environment.apiUrl;
 
 export const API_ENDPOINTS = {
     ingest: `${BASE_URL}/ingest`,

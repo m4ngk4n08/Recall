@@ -25,6 +25,9 @@
     <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.2.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+	<None Update="Models\AllMiniLML6V2\**\*">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
   </ItemGroup>
 
 </Project>

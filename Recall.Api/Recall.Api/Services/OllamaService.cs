@@ -1,7 +1,9 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using Recall.Api.DTOs.Chat;
 using Recall.Api.Services.Interfaces;
+using Recall.Api.Settings;
 
 namespace Recall.Api.Services
 {
@@ -9,12 +11,16 @@ namespace Recall.Api.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<OllamaService> _logger;
-        private const string OllamaEndpoint = "http://localhost:11434/api";
+        private readonly OllamaConnectionSettings _ollamaConnectionSettings;
 
-        public OllamaService(HttpClient httpClient, ILogger<OllamaService> logger)
+        public OllamaService(
+            HttpClient httpClient, 
+            ILogger<OllamaService> logger,
+            IOptionsSnapshot<OllamaConnectionSettings> optionsSnapshot)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _ollamaConnectionSettings = optionsSnapshot.Value;
         }
 
         public async Task<string> GenerateAnswerAsync(string query, string context, string model = "llama3")
@@ -38,7 +44,7 @@ namespace Recall.Api.Services
             try
             {
                 var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync($"{OllamaEndpoint}/generate", content);
+                var response = await _httpClient.PostAsync($"{_ollamaConnectionSettings.BaseUrl}/generate", content);
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -108,7 +114,7 @@ namespace Recall.Api.Services
             try
             {
                 var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync($"{OllamaEndpoint}/chat", content);
+                var response = await _httpClient.PostAsync($"{_ollamaConnectionSettings.BaseUrl}/chat", content);
 
                 if (!response.IsSuccessStatusCode)
                 {

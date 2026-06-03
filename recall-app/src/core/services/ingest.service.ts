@@ -1,9 +1,10 @@
 import { HttpClient } from "@angular/common/http";
-import { inject } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs/internal/Observable";
 import { API_ENDPOINTS } from "../../app/api.config";
 
 
+@Injectable({ providedIn: 'root' })
 export class IngestService{
     private readonly http = inject(HttpClient);
     private readonly apiIngestUrl = API_ENDPOINTS.ingest;

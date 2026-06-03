@@ -6,6 +6,7 @@ using Recall.Api.Repositories;
 using Recall.Api.Repositories.Interfaces;
 using Recall.Api.Services;
 using Recall.Api.Services.Interfaces;
+using Recall.Api.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ var key = builder.Configuration["Gemini:ApiKey"];
 
 Console.WriteLine(string.IsNullOrEmpty(key) ? "missing" : "ok");
 
+builder.Services.Configure<OllamaConnectionSettings>(
+    builder.Configuration.GetSection(OllamaConnectionSettings.SectionName));
+
 // DI
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IITemService, ItemService>();
@@ -41,12 +45,25 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("DevCors", policy =>
+    if (builder.Environment.IsDevelopment())
     {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
+        options.AddPolicy("DevCors", policy =>
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    } 
+    else
+    {
+        options.AddPolicy("DockerCors", policy =>
+        {
+            policy.WithOrigins("http://localhost:8080") // Angular container port
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    }
+
 });
 
 var app = builder.Build();
@@ -56,8 +73,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors("DevCors");
 }
-app.UseCors("DevCors");
+else
+{
+    app.UseCors("DockerCors");
+}
 
 app.UseMiddleware<GlobalExceptionHandler>();
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ItemService } from '../../core/services/item.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { IngestService } from '../../core/services/ingest.service';
 
 @Component({
   selector: 'app-url-ingestor',
@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UrlIngestor {
-    private readonly itemService = inject(ItemService);
+    private readonly ingestService = inject(IngestService);
     private readonly fb = inject(FormBuilder);
 
     readonly isLoading = signal(false);
@@ -33,7 +33,7 @@ export class UrlIngestor {
       this.successMessage.set(null);
       this.errorMessage.set(null);
 
-      this.itemService.ingestUrl(url!, tagList).subscribe({
+      this.ingestService.ingestUrl(url!, tagList).subscribe({
         next: (response) => {
           this.successMessage.set(`Ingestion started. Job ID: ${response.jobId.slice(0, 8)} ..`);
           this.ingestForm.reset();

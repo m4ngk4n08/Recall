@@ -3,16 +3,57 @@ version: '3.8'
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: recall-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: kanor143
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: recalldb
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - recall-net
+  
+  ollama:
+    image: ollama/ollama:latest
+    container_name: recall-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - recall-net
+  
+  api:
+    build:
+      context: .
+      dockerfile: Recall.Api/Recall.Api/Dockerfile
+    container_name: recall-api
+    ports:
+      - "8081:8080" # Map host 8081 to container 8080
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=recalldb;Username=postgres;Password=${DB_PASSWORD}
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Ollama__BaseUrl=${OLLAMA_BASE_URL}
+    depends_on:
+      - postgres
+      - ollama
+    networks:
+      - recall-net
+    
+  ui:
+    build:
+      context: ./recall-app
+      dockerfile: Dockerfile
+    container_name: recall-ui
+    ports:
+     - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - recall-net
+
+networks:
+  recall-net:
+    driver: bridge
 
 volumes:
   postgres_data:
+  ollama_data:
