@@ -27,3 +27,6 @@
   As soon as you save a link or file, the AI generates a 2-3 sentence summary for the Dashboard card.
    * Why: Helps you quickly remember what a saved item is about without re-reading it.
    * Implementation: Add a background task that calls Ollama with a "summarize" prompt right after ingestion.
+
+
+-- Currently creating microservices for this project and others.
